@@ -1,201 +1,141 @@
 import React, { useState } from 'react';
 import { 
   View, Text, StyleSheet, TouchableOpacity, ScrollView, 
-  TextInput, FlatList, Image, Switch, SafeAreaView, StatusBar, KeyboardAvoidingView, Platform 
+  TextInput, FlatList, Image, Switch, SafeAreaView, StatusBar, Platform 
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { 
   Users, Phone, MessageSquare, Settings, Search, Plus, 
   ChevronRight, PhoneOutgoing, PhoneIncoming, PhoneMissed, 
-  Check, CheckCheck, Pin, Info, Bell, Shield, Smartphone, 
-  Folder, Battery, HardDrive, Palette, Globe, Briefcase, HelpCircle, Info as InfoIcon, Link
+  Check, CheckCheck, Pin, Bell, Shield, Smartphone, 
+  Folder, Battery, HardDrive, Palette, Globe, Briefcase, HelpCircle, Info, Link, Mail, Lock
 } from 'lucide-react-native';
 
-// ==========================================
-// 1. КОНФИГУРАЦИЯ И ДАННЫЕ (Фейковые данные для красоты)
-// ==========================================
-
-const COLORS = {
-  bg: '#0a0a0a',
-  surface: '#111111',
-  surfaceLight: '#1a1a1a',
-  primary: '#a04a44', // Тот самый красный из твоего дизайна
-  primaryActive: '#ff3333',
+// --- КОНФИГУРАЦИЯ ЦВЕТОВ (Приятный Graphite/Slate дизайн) ---
+const THEME = {
+  bg: '#1c1c1e', 
+  surface: '#2c2c2e',
+  surfaceLight: '#3a3a3c',
+  primary: '#e94560', // Акцентный красный GAWX
   text: '#ffffff',
-  textMuted: '#777777',
-  textDark: '#444444',
-  border: '#222222'
+  muted: '#8e8e93',
+  border: '#38383a'
 };
 
-const DUMMY_CHATS = [
-  { id: '1', name: 'Карина', msg: 'Сказала скинет про нее видео', time: '15:11', unread: 0, pinned: true, read: true },
-  { id: '2', name: 'Максим', msg: 'Норм', time: '12:54', unread: 0, pinned: false, read: true },
-  { id: '3', name: 'Оля', msg: 'оо', time: '12:51', unread: 0, pinned: false, read: true },
-  { id: '4', name: 'Секретный Чат', msg: 'теперь в MAX. Напишите что-нибудь!', time: 'вчера', unread: 2, pinned: false, read: false },
-  { id: '5', name: 'Влад', msg: 'Еще очень странные дела', time: '09.04', unread: 0, pinned: false, read: true },
+// --- ДАННЫЕ ИЗ ТВОИХ СКРИНШОТОВ ---
+const CHATS = [
+  { id: '1', name: 'Карина', msg: 'Сказала скинет про нее видео', time: '15:11', pinned: true, read: true },
+  { id: '2', name: 'Максим', msg: 'Норм', time: '12:54', read: true },
+  { id: '3', name: 'Оля', msg: 'оо', time: '12:51', read: true },
+  { id: '4', name: 'GAWX Support', msg: 'Добро пожаловать в GAWX!', time: 'вчера', unread: 1 },
 ];
 
-const DUMMY_CALLS = [
-  { id: '1', name: 'Карина', type: 'incoming', time: 'Вчера', duration: '2 мин' },
-  { id: '2', name: 'Максим', type: 'outgoing', time: 'Вчера', duration: '15 с' },
-  { id: '3', name: 'Оля', type: 'missed', time: '09.04', duration: 'Пропущенный' },
-  { id: '4', name: 'Влад', type: 'missed', time: '08.04', duration: 'Пропущенный' },
+const CALLS = [
+  { id: '1', name: 'Карина', type: 'incoming', time: 'Вчера', dur: '12 мин' },
+  { id: '2', name: 'Максим', type: 'outgoing', time: 'Вчера', dur: '45 с' },
+  { id: '3', name: 'Оля', type: 'missed', time: '09.04' },
 ];
 
-// ==========================================
-// 2. ГЛОБАЛЬНЫЕ КОМПОНЕНТЫ UI
-// ==========================================
+// --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ ---
+const NavIcon = ({ Icon, color, size = 24 }) => <Icon color={color} size={size} />;
 
-const Avatar = ({ name, size = 50 }) => (
-  <View style={[styles.avatarContainer, { width: size, height: size, borderRadius: size / 2 }]}>
-    <Text style={[styles.avatarText, { fontSize: size / 2.5 }]}>{name.charAt(0)}</Text>
-  </View>
+const MenuItem = ({ icon: Icon, label, color = THEME.primary, onPress, showArrow = false }) => (
+  <TouchableOpacity style={styles.menuItem} onPress={onPress}>
+    <View style={styles.menuIconContainer}>
+      <Icon color={color} size={22} />
+    </View>
+    <Text style={[styles.menuLabel, { color: color === THEME.primary ? THEME.primary : THEME.text }]}>{label}</Text>
+    {showArrow && <ChevronRight color={THEME.border} size={20} />}
+  </TouchableOpacity>
 );
 
-const Divider = () => <View style={styles.divider} />;
+// --- ЭКРАНЫ ---
 
-const SearchBar = ({ placeholder }) => (
-  <View style={styles.searchSection}>
-    <Search color={COLORS.textMuted} size={20} />
-    <TextInput style={styles.searchInput} placeholder={placeholder} placeholderTextColor={COLORS.textMuted} />
-  </View>
-);
-
-// ==========================================
-// 3. ЭКРАНЫ ПРИЛОЖЕНИЯ
-// ==========================================
-
-// --- ЭКРАН "КОНТАКТЫ" ---
+// 1. Контакты / Начать общение
 function ContactsScreen() {
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.headerRow}>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
         <Text style={styles.headerTitle}>Контакты</Text>
-        <TouchableOpacity style={styles.iconButton}><Plus color={COLORS.text} size={24} /></TouchableOpacity>
+        <TouchableOpacity style={styles.headerBtn}><Plus color={THEME.text} size={24} /></TouchableOpacity>
       </View>
-      <SearchBar placeholder="Найти по имени или номеру" />
-      
+      <View style={styles.searchBar}>
+        <Search color={THEME.muted} size={18} />
+        <TextInput placeholder="Найти по имени" placeholderTextColor={THEME.muted} style={styles.searchInput} />
+      </View>
       <ScrollView>
-        {/* Меню "Начать общение" из твоего фото */}
-        <TouchableOpacity style={styles.actionRow}>
-          <Users color={COLORS.primary} size={24} />
-          <Text style={styles.actionText}>Создать группу</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionRow}>
-          <Phone color={COLORS.primary} size={24} />
-          <Text style={styles.actionText}>Создать групповой звонок</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionRow}>
-          <MessageSquare color={COLORS.primary} size={24} />
-          <Text style={styles.actionText}>Создать приватный канал</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionRow}>
-          <Phone color={COLORS.primary} size={24} />
-          <Text style={styles.actionText}>Найти по номеру</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionRow}>
-          <Link color={COLORS.primary} size={24} />
-          <Text style={styles.actionText}>Пригласить по ссылке</Text>
-        </TouchableOpacity>
+        <MenuItem icon={Users} label="Создать группу" />
+        <MenuItem icon={Phone} label="Создать групповой звонок" />
+        <MenuItem icon={MessageSquare} label="Создать приватный канал" />
+        <MenuItem icon={Phone} label="Найти по номеру" />
+        <MenuItem icon={Link} label="Пригласить по ссылке" />
         
-        <Text style={styles.sectionLetter}>A</Text>
-        <View style={styles.contactItem}><Avatar name="Антон" size={40}/><Text style={styles.contactName}>Антон Смирнов</Text></View>
-        <View style={styles.contactItem}><Avatar name="Алина" size={40}/><Text style={styles.contactName}>Алина (Работа)</Text></View>
-        <Text style={styles.sectionLetter}>B</Text>
-        <View style={styles.contactItem}><Avatar name="Влад" size={40}/><Text style={styles.contactName}>Влад</Text></View>
+        <Text style={styles.sectionHeader}>А</Text>
+        <View style={styles.contactRow}><View style={styles.avatarSmall}/><Text style={styles.contactName}>Артём</Text></View>
+        <View style={styles.contactRow}><View style={styles.avatarSmall}/><Text style={styles.contactName}>Алина</Text></View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// --- ЭКРАН "ЗВОНКИ" ---
+// 2. Звонки
 function CallsScreen() {
-  const [activeTab, setActiveTab] = useState('all'); // all или missed
-
   return (
-    <SafeAreaView style={styles.screen}>
-      <Text style={[styles.headerTitle, {paddingHorizontal: 15, paddingTop: 10}]}>Звонки</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}><Text style={styles.headerTitle}>Звонки</Text></View>
+      <MenuItem icon={Phone} label="Позвонить контакту" />
+      <MenuItem icon={Link} label="Создать ссылку на звонок" />
       
-      <View style={styles.callActionsBox}>
-        <TouchableOpacity style={styles.actionRow}>
-          <PhoneOutgoing color={COLORS.primary} size={22} />
-          <Text style={styles.actionText}>Позвонить контакту</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionRow}>
-          <Link color={COLORS.primary} size={22} />
-          <Text style={styles.actionText}>Создать групповой звонок</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.callTabs}>
-        <TouchableOpacity onPress={() => setActiveTab('all')} style={[styles.callTabBtn, activeTab === 'all' && styles.callTabActive]}>
-          <Text style={[styles.callTabText, activeTab === 'all' && styles.callTabTextActive]}>Все</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab('missed')} style={[styles.callTabBtn, activeTab === 'missed' && styles.callTabActive]}>
-          <Text style={[styles.callTabText, activeTab === 'missed' && styles.callTabTextActive]}>Пропущенные</Text>
-        </TouchableOpacity>
+      <View style={styles.tabSwitcher}>
+        <TouchableOpacity style={[styles.tabBtn, styles.tabActive]}><Text style={styles.tabText}>Все</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.tabBtn}><Text style={styles.tabTextMuted}>Пропущенные</Text></TouchableOpacity>
       </View>
 
       <FlatList
-        data={DUMMY_CALLS.filter(c => activeTab === 'all' ? true : c.type === 'missed')}
-        keyExtractor={item => item.id}
+        data={CALLS}
         renderItem={({item}) => (
-          <TouchableOpacity style={styles.callItem}>
-            <Avatar name={item.name} size={50} />
-            <View style={styles.callItemInfo}>
-              <Text style={[styles.callName, item.type === 'missed' && {color: COLORS.primary}]}>{item.name}</Text>
-              <View style={styles.callDetailsRow}>
-                {item.type === 'incoming' && <PhoneIncoming size={14} color={COLORS.textMuted} />}
-                {item.type === 'outgoing' && <PhoneOutgoing size={14} color={COLORS.textMuted} />}
-                {item.type === 'missed' && <PhoneMissed size={14} color={COLORS.primary} />}
-                <Text style={styles.callTimeText}> {item.duration} • {item.time}</Text>
-              </View>
+          <View style={styles.chatRow}>
+            <View style={styles.avatar} />
+            <View style={{flex: 1, marginLeft: 15}}>
+              <Text style={[styles.chatName, item.type === 'missed' && {color: THEME.primary}]}>{item.name}</Text>
+              <Text style={styles.chatMsg}>{item.type === 'incoming' ? 'Входящий' : 'Исходящий'} • {item.time}</Text>
             </View>
-            <TouchableOpacity style={styles.infoBtn}>
-              <InfoIcon size={22} color={COLORS.textMuted} />
-            </TouchableOpacity>
-          </TouchableOpacity>
+            <Info color={THEME.muted} size={20} />
+          </View>
         )}
       />
     </SafeAreaView>
   );
 }
 
-// --- ЭКРАН "ЧАТЫ" ---
+// 3. Чаты
 function ChatsScreen() {
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.headerRow}>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
         <Text style={styles.headerTitle}>Чаты</Text>
         <View style={{flexDirection: 'row'}}>
-          <TouchableOpacity style={styles.iconButton}><Text style={{color: COLORS.textMuted}}>...</Text></TouchableOpacity>
-          <TouchableOpacity style={[styles.iconButton, {backgroundColor: COLORS.primary, borderRadius: 20}]}>
-            <Plus color={COLORS.text} size={20} />
-          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerBtn}><Text style={{color: THEME.text}}>...</Text></TouchableOpacity>
+          <TouchableOpacity style={[styles.headerBtn, {backgroundColor: THEME.primary}]}><Plus color="#fff" size={20}/></TouchableOpacity>
         </View>
       </View>
-
       <FlatList
-        data={DUMMY_CHATS}
-        keyExtractor={item => item.id}
+        data={CHATS}
         renderItem={({item}) => (
-          <TouchableOpacity style={styles.chatItem}>
-            <Avatar name={item.name} size={55} />
-            <View style={styles.chatItemCenter}>
-              <Text style={styles.chatName}>{item.name}</Text>
-              <Text style={styles.chatMsg} numberOfLines={1}>{item.msg}</Text>
-            </View>
-            <View style={styles.chatItemRight}>
-              <View style={styles.chatTimeRow}>
-                {item.read ? <CheckCheck size={14} color={COLORS.primary} style={{marginRight: 4}}/> : null}
-                <Text style={styles.chatTime}>{item.time}</Text>
+          <TouchableOpacity style={styles.chatRow}>
+            <View style={styles.avatar} />
+            <View style={{flex: 1, marginLeft: 15}}>
+              <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                <Text style={styles.chatName}>{item.name}</Text>
+                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                  {item.read && <CheckCheck size={14} color={THEME.primary} style={{marginRight: 4}}/>}
+                  <Text style={styles.chatTime}>{item.time}</Text>
+                </View>
               </View>
-              <View style={styles.chatBadgeRow}>
-                {item.pinned && <Pin size={14} color={COLORS.textMuted} style={{marginTop: 5}}/>}
-                {item.unread > 0 && (
-                  <View style={styles.unreadBadge}><Text style={styles.unreadText}>{item.unread}</Text></View>
-                )}
+              <View style={{flexDirection: 'row', justifyContent: 'space-between', marginTop: 4}}>
+                <Text style={styles.chatMsg} numberOfLines={1}>{item.msg}</Text>
+                {item.pinned && <Pin size={14} color={THEME.muted} />}
               </View>
             </View>
           </TouchableOpacity>
@@ -205,182 +145,107 @@ function ChatsScreen() {
   );
 }
 
-// --- ЭКРАН "НАСТРОЙКИ" ---
+// 4. Настройки GAWX
 function SettingsScreen() {
-  const [isDarkMode, setIsDarkMode] = useState(true);
-
-  const SettingRow = ({ icon, label, hasArrow = true, switchValue, onSwitch }) => (
-    <TouchableOpacity style={styles.settingRow} disabled={!!onSwitch}>
-      <View style={styles.settingIconBox}>{icon}</View>
-      <Text style={styles.settingLabel}>{label}</Text>
-      {hasArrow && !onSwitch && <ChevronRight size={20} color={COLORS.textDark} />}
-      {onSwitch && <Switch value={switchValue} onValueChange={onSwitch} trackColor={{ false: COLORS.border, true: COLORS.primary }} thumbColor="#fff" />}
-    </TouchableOpacity>
-  );
-
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={styles.container}>
       <ScrollView>
-        {/* Профиль как на скрине */}
-        <View style={styles.profileHeader}>
-          <View style={styles.profileAvatarLarge}>
-            <Image 
-              source={{uri: 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}} 
-              style={{width: 100, height: 100, borderRadius: 50}} 
-            />
-            <TouchableOpacity style={styles.editAvatarBtn}>
-              <Text style={{color: '#fff', fontSize: 12}}>✏️</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.profileSection}>
+          <Image source={{uri: 'https://i.pravatar.cc/150?u=artem'}} style={styles.largeAvatar} />
           <Text style={styles.profileName}>тёмв</Text>
+          <Text style={styles.profileStatus}>в сети</Text>
         </View>
 
-        <TouchableOpacity style={styles.inviteBox}>
-          <Link color={COLORS.primary} size={20} style={{marginRight: 10}} />
-          <Text style={{color: COLORS.primary, fontSize: 16, fontWeight: 'bold'}}>Пригласить друзей</Text>
+        <TouchableOpacity style={styles.inviteBanner}>
+          <Link color={THEME.primary} size={20} />
+          <Text style={styles.inviteText}>Пригласить друзей</Text>
         </TouchableOpacity>
 
-        <View style={styles.settingsBlock}>
-          <SettingRow icon={<Bell color={COLORS.textMuted} size={22}/>} label="Уведомления и звук" />
-          <SettingRow icon={<Shield color={COLORS.textMuted} size={22}/>} label="Безопасность" />
-          <SettingRow icon={<Smartphone color={COLORS.textMuted} size={22}/>} label="Устройства" />
-          <SettingRow icon={<MessageSquare color={COLORS.textMuted} size={22}/>} label="Сообщения" />
-          <SettingRow icon={<Folder color={COLORS.textMuted} size={22}/>} label="Папки" />
+        <View style={styles.settingsGroup}>
+          <MenuItem icon={Bell} label="Уведомления и звук" color={THEME.text} showArrow />
+          <MenuItem icon={Shield} label="Безопасность" color={THEME.text} showArrow />
+          <MenuItem icon={Smartphone} label="Устройства" color={THEME.text} showArrow />
+          <MenuItem icon={MessageSquare} label="Сообщения" color={THEME.text} showArrow />
+          <MenuItem icon={Folder} label="Папки" color={THEME.text} showArrow />
         </View>
 
-        <View style={styles.settingsBlock}>
-          <SettingRow icon={<Battery color={COLORS.textMuted} size={22}/>} label="Экономия батареи и сети" />
-          <SettingRow icon={<HardDrive color={COLORS.textMuted} size={22}/>} label="Память" />
+        <View style={styles.settingsGroup}>
+          <MenuItem icon={Battery} label="Экономия батареи и сети" color={THEME.text} showArrow />
+          <MenuItem icon={HardDrive} label="Память" color={THEME.text} showArrow />
         </View>
 
-        <View style={styles.settingsBlock}>
-          <SettingRow icon={<Palette color={COLORS.textMuted} size={22}/>} label="Оформление" />
-          <SettingRow icon={<Globe color={COLORS.textMuted} size={22}/>} label="Язык приложения" />
-          <SettingRow icon={<Settings color={COLORS.textMuted} size={22}/>} label="Темная тема" onSwitch={setIsDarkMode} switchValue={isDarkMode} />
+        <View style={styles.settingsGroup}>
+          <MenuItem icon={Palette} label="Оформление" color={THEME.text} showArrow />
+          <MenuItem icon={Globe} label="Язык приложения" color={THEME.text} showArrow />
         </View>
 
-        <View style={styles.settingsBlock}>
-          <SettingRow icon={<Briefcase color={COLORS.textMuted} size={22}/>} label="MAX для бизнеса" />
+        <View style={styles.settingsGroup}>
+          <MenuItem icon={HelpCircle} label="Помощь" color={THEME.text} showArrow />
+          <MenuItem icon={Info} label="О приложении GAWX" color={THEME.text} showArrow />
         </View>
-
-        <View style={styles.settingsBlock}>
-          <SettingRow icon={<HelpCircle color={COLORS.textMuted} size={22}/>} label="Помощь" />
-          <SettingRow icon={<InfoIcon color={COLORS.textMuted} size={22}/>} label="О приложении" />
-        </View>
-        <View style={{height: 50}} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// ==========================================
-// 4. ГЛАВНЫЙ НАВИГАТОР (Корпус приложения)
-// ==========================================
-
+// --- НАВИГАЦИЯ ---
 const Tab = createBottomTabNavigator();
 
 export default function App() {
   return (
-    <>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.bg} />
-      <NavigationContainer>
-        <Tab.Navigator
-          screenOptions={{
-            headerShown: false,
-            tabBarStyle: styles.tabBar,
-            tabBarActiveTintColor: COLORS.primary,
-            tabBarInactiveTintColor: COLORS.textMuted,
-            tabBarLabelStyle: { fontSize: 11, marginBottom: 5, fontWeight: '500' },
-            tabBarIconStyle: { marginTop: 5 }
-          }}
-        >
-          <Tab.Screen 
-            name="Контакты" 
-            component={ContactsScreen} 
-            options={{ tabBarIcon: ({color}) => <Users color={color} size={24} /> }} 
-          />
-          <Tab.Screen 
-            name="Звонки" 
-            component={CallsScreen} 
-            options={{ tabBarIcon: ({color}) => <Phone color={color} size={24} /> }} 
-          />
-          <Tab.Screen 
-            name="Чаты" 
-            component={ChatsScreen} 
-            options={{ tabBarIcon: ({color}) => <MessageSquare color={color} size={24} /> }} 
-          />
-          <Tab.Screen 
-            name="Настройки" 
-            component={SettingsScreen} 
-            options={{ tabBarIcon: ({color}) => <Settings color={color} size={24} /> }} 
-          />
-        </Tab.Navigator>
-      </NavigationContainer>
-    </>
+    <NavigationContainer>
+      <StatusBar barStyle="light-content" />
+      <Tab.Navigator screenOptions={{
+        headerShown: false,
+        tabBarStyle: styles.tabBar,
+        tabBarActiveTintColor: THEME.primary,
+        tabBarInactiveTintColor: THEME.muted,
+      }}>
+        <Tab.Screen name="Контакты" component={ContactsScreen} options={{tabBarIcon: (p) => <NavIcon Icon={Users} {...p}/>}} />
+        <Tab.Screen name="Звонки" component={CallsScreen} options={{tabBarIcon: (p) => <NavIcon Icon={Phone} {...p}/>}} />
+        <Tab.Screen name="Чаты" component={ChatsScreen} options={{tabBarIcon: (p) => <NavIcon Icon={MessageSquare} {...p}/>}} />
+        <Tab.Screen name="Настройки" component={SettingsScreen} options={{tabBarIcon: (p) => <NavIcon Icon={Settings} {...p}/>}} />
+      </Tab.Navigator>
+    </NavigationContainer>
   );
 }
 
-// ==========================================
-// 5. СТИЛИ (Дизайн система GAWX Ultimate)
-// ==========================================
-
+// --- СТИЛИ ---
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.bg },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, paddingVertical: 10 },
-  headerTitle: { color: COLORS.text, fontSize: 28, fontWeight: 'bold' },
-  iconButton: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 20, marginLeft: 10 },
+  container: { flex: 1, backgroundColor: THEME.bg },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, marginTop: 10 },
+  headerTitle: { color: THEME.text, fontSize: 32, fontWeight: 'bold' },
+  headerBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: THEME.surface, justifyContent: 'center', alignItems: 'center', marginLeft: 10 },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: THEME.surface, margin: 15, paddingHorizontal: 15, borderRadius: 10, height: 40 },
+  searchInput: { color: THEME.text, marginLeft: 10, flex: 1 },
   
-  // Компоненты
-  avatarContainer: { backgroundColor: COLORS.surfaceLight, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  avatarText: { color: COLORS.text, fontWeight: 'bold' },
-  divider: { height: 1, backgroundColor: COLORS.border, marginLeft: 70 },
+  menuItem: { flexDirection: 'row', alignItems: 'center', padding: 15, borderBottomWidth: 0.5, borderBottomColor: THEME.border },
+  menuIconContainer: { width: 30, alignItems: 'center', marginRight: 15 },
+  menuLabel: { fontSize: 17, flex: 1 },
   
-  // Поиск и экшены
-  searchSection: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 12, marginHorizontal: 15, marginVertical: 10, paddingHorizontal: 12, height: 45 },
-  searchInput: { flex: 1, color: COLORS.text, marginLeft: 10, fontSize: 16 },
-  actionRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, paddingHorizontal: 20 },
-  actionText: { color: COLORS.primary, fontSize: 17, marginLeft: 15, fontWeight: '500' },
-  sectionLetter: { color: COLORS.primary, fontSize: 14, fontWeight: 'bold', marginLeft: 20, marginTop: 15, marginBottom: 5 },
-  
-  // Списки (Контакты/Чаты)
-  contactItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 10 },
-  contactName: { color: COLORS.text, fontSize: 17, marginLeft: 15 },
-  chatItem: { flexDirection: 'row', paddingHorizontal: 15, paddingVertical: 12, alignItems: 'center' },
-  chatItemCenter: { flex: 1, marginLeft: 15, justifyContent: 'center' },
-  chatName: { color: COLORS.text, fontSize: 17, fontWeight: '600', marginBottom: 4 },
-  chatMsg: { color: COLORS.textMuted, fontSize: 15 },
-  chatItemRight: { alignItems: 'flex-end', justifyContent: 'center' },
-  chatTimeRow: { flexDirection: 'row', alignItems: 'center' },
-  chatTime: { color: COLORS.textMuted, fontSize: 12 },
-  chatBadgeRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  unreadBadge: { backgroundColor: COLORS.primary, borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2, minWidth: 20, alignItems: 'center' },
-  unreadText: { color: COLORS.text, fontSize: 12, fontWeight: 'bold' },
-  
-  // Звонки
-  callActionsBox: { marginVertical: 10 },
-  callTabs: { flexDirection: 'row', paddingHorizontal: 15, marginBottom: 10 },
-  callTabBtn: { marginRight: 20, paddingBottom: 5 },
-  callTabActive: { borderBottomWidth: 2, borderBottomColor: COLORS.primary },
-  callTabText: { color: COLORS.textMuted, fontSize: 16, fontWeight: '500' },
-  callTabTextActive: { color: COLORS.text },
-  callItem: { flexDirection: 'row', paddingHorizontal: 15, paddingVertical: 12, alignItems: 'center' },
-  callItemInfo: { flex: 1, marginLeft: 15 },
-  callName: { color: COLORS.text, fontSize: 17, fontWeight: '600', marginBottom: 4 },
-  callDetailsRow: { flexDirection: 'row', alignItems: 'center' },
-  callTimeText: { color: COLORS.textMuted, fontSize: 14 },
-  infoBtn: { padding: 10 },
+  sectionHeader: { color: THEME.primary, fontWeight: 'bold', padding: 15, backgroundColor: THEME.surface },
+  contactRow: { flexDirection: 'row', alignItems: 'center', padding: 12, paddingHorizontal: 15 },
+  contactName: { color: THEME.text, fontSize: 17, marginLeft: 15 },
+  avatarSmall: { width: 40, height: 40, borderRadius: 20, backgroundColor: THEME.surfaceLight },
 
-  // Настройки
-  profileHeader: { alignItems: 'center', marginTop: 40, marginBottom: 20 },
-  profileAvatarLarge: { position: 'relative' },
-  editAvatarBtn: { position: 'absolute', right: 0, bottom: 0, backgroundColor: COLORS.surfaceLight, borderRadius: 15, width: 30, height: 30, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: COLORS.bg },
-  profileName: { color: COLORS.text, fontSize: 24, fontWeight: 'bold', marginTop: 15 },
-  inviteBox: { flexDirection: 'row', backgroundColor: '#1a1212', marginHorizontal: 15, padding: 15, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
-  settingsBlock: { backgroundColor: COLORS.surface, borderRadius: 12, marginHorizontal: 15, marginBottom: 15, overflow: 'hidden' },
-  settingRow: { flexDirection: 'row', alignItems: 'center', padding: 15, borderBottomWidth: 1, borderBottomColor: COLORS.bg },
-  settingIconBox: { width: 30, alignItems: 'center', marginRight: 15 },
-  settingLabel: { flex: 1, color: COLORS.text, fontSize: 16 },
-  
-  // Нижнее меню
-  tabBar: { backgroundColor: COLORS.bg, borderTopWidth: 1, borderTopColor: COLORS.surfaceLight, height: 65, paddingBottom: Platform.OS === 'ios' ? 20 : 5, paddingTop: 5 }
+  chatRow: { flexDirection: 'row', padding: 15, alignItems: 'center' },
+  avatar: { width: 55, height: 55, borderRadius: 27.5, backgroundColor: THEME.surfaceLight },
+  chatName: { color: THEME.text, fontSize: 17, fontWeight: '600' },
+  chatMsg: { color: THEME.muted, fontSize: 15, marginTop: 2 },
+  chatTime: { color: THEME.muted, fontSize: 13 },
+
+  tabSwitcher: { flexDirection: 'row', padding: 15 },
+  tabBtn: { marginRight: 20, paddingBottom: 5 },
+  tabActive: { borderBottomWidth: 2, borderBottomColor: THEME.primary },
+  tabText: { color: THEME.text, fontSize: 16, fontWeight: '600' },
+  tabTextMuted: { color: THEME.muted, fontSize: 16 },
+
+  profileSection: { alignItems: 'center', padding: 30 },
+  largeAvatar: { width: 100, height: 100, borderRadius: 50, marginBottom: 15 },
+  profileName: { color: THEME.text, fontSize: 24, fontWeight: 'bold' },
+  profileStatus: { color: THEME.primary, marginTop: 5 },
+  inviteBanner: { flexDirection: 'row', backgroundColor: THEME.surface, margin: 15, padding: 15, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  inviteText: { color: THEME.primary, fontWeight: 'bold', marginLeft: 10, fontSize: 16 },
+  settingsGroup: { backgroundColor: THEME.surface, marginHorizontal: 15, marginBottom: 15, borderRadius: 12, overflow: 'hidden' },
+  tabBar: { backgroundColor: THEME.surface, borderTopWidth: 0, height: 60 }
 });
