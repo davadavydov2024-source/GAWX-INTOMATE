@@ -1,21 +1,47 @@
-name: Build GAWX
+name: Build GAWX APK
 on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Скачиваем твой код
+        uses: actions/checkout@v4
+
+      - name: Настраиваем Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
-      - name: Install Dependencies
-        run: |
-          npm install
-          npx expo install react-native-svg
-      - name: Setup EAS
-        uses: expo/expo-github-action@v8
+
+      - name: Настраиваем Java для Android
+        uses: actions/setup-java@v3
         with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-      - name: Build APK
-        run: npx eas-cli build --platform android --profile preview --non-interactive
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Магия сборки (Создаем проект с нуля)
+        run: |
+          # 1. Создаем абсолютно чистый шаблон приложения
+          npx create-expo-app gawx-app --template blank
+          
+          # 2. Копируем туда твой красивый App.js
+          cp App.js gawx-app/App.js
+          
+          # 3. Заходим в папку
+          cd gawx-app
+          
+          # 4. Устанавливаем все нужные библиотеки для GAWX
+          npm install @react-navigation/native @react-navigation/bottom-tabs lucide-react-native
+          npx expo install react-native-screens react-native-safe-area-context react-native-svg
+          
+          # 5. Генерируем Android-движок
+          npx expo prebuild --platform android --clean
+          
+          # 6. Собираем APK!
+          cd android
+          ./gradlew assembleRelease
+
+      - name: Выдаем готовый APK файл
+        uses: actions/upload-artifact@v4
+        with:
+          name: GAWX-Final-APK
+          path: gawx-app/android/app/build/outputs/apk/release/app-release.apk
