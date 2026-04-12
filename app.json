@@ -1,17 +1,10 @@
 {
   "expo": {
-    "name": "GAWX Ultimate",
-    "slug": "gawx-ultimate",
-    "version": "1.0.3",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#0a0a0a",
+    "name": "GAWX",
+    "slug": "gawx-app",
+    "version": "1.0.0",
     "android": {
-      "package": "com.gawx.ultimate",
-      "adaptiveIcon": {
-        "backgroundColor": "#0a0a0a"
-      }
+      "package": "com.artiediks.gawx"
     }
   }
 }
