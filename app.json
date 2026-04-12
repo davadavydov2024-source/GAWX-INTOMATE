@@ -1,31 +1,17 @@
 {
   "expo": {
     "name": "GAWX",
-    "slug": "gawx-app",
+    "slug": "gawx",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true
-    },
+    "userInterfaceStyle": "dark",
     "android": {
+      "package": "com.sswckk.gawx",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.sswckk.gawx"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#000000"
+      }
     },
     "extra": {
       "eas": {
