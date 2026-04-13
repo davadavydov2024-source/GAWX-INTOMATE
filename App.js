@@ -508,7 +508,8 @@ function ChatWindowScreen({ route, navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ImageBackground source={require('./assets/chat_bg.png')} style={styles.chatBackground} imageStyle={{opacity: 0.15}}>
+      <ImageBackground source={{ uri: 'https://via.placeholder.com/500' }}
+
         <View style={styles.chatHeader}>
           <TouchableOpacity onPress={() => navigation.goBack()}><ChevronRight color={THEME.text} size={24} style={{ transform: [{ rotate: '180deg' }] }}/></TouchableOpacity>
           <GAWXAvatar source={system ? require('./assets/icon.png') : null} online={!system} glow={system} size={40} style={{ marginHorizontal: 10 }} />
