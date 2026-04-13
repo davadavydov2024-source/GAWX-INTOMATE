@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "GAWX",
-    "slug": "gawx-app",
+    "slug": "gawx",
     "version": "1.0.0",
     "sdkVersion": "50.0.0",
     "android": {
